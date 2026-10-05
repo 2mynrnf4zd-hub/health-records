@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Returning to Health Records…</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 16px -apple-system, BlinkMacSystemFont, sans-serif; max-width: 560px; margin: 15vh auto; padding: 0 16px; }
+  a { color: #2a78d6; }
+</style>
+</head>
+<body>
+<p id="msg">Returning to Health Records…</p>
+<script>
+// Sign-in relay. Providers will only send a sign-in result to an https address, but Health Records runs on this
+// family's own computer at http://localhost:8768. This page passes the result straight on, without storing or
+// sending it anywhere else. The one-time code it carries is useless on its own: exchanging it also needs a secret
+// and a one-time verifier that only the app on that computer has.
+// Destinations are fixed here (never taken from the URL), so this page can't be used to redirect anywhere else.
+(function () {
+  var q = location.search;
+  if (!/[?&](code|error)=/.test(q)) {
+    document.getElementById("msg").textContent = "This page only relays sign-ins for the Brant family's Health Records app.";
+    return;
+  }
+  // "ios." states belong to the iPhone app; everything else goes to the Mac.
+  var state = (q.match(/[?&]state=([^&]*)/) || [])[1] || "";
+  var target = decodeURIComponent(state).indexOf("ios.") === 0
+    ? "healthrecords://connect/callback"
+    : "http://localhost:8768/connect/callback";
+  history.replaceState(null, "", location.pathname);   // keep the code out of this page's history entry
+  location.replace(target + q);
+  setTimeout(function () {
+    var a = document.createElement("a");
+    a.href = target + q;
+    a.textContent = "Continue to Health Records";
+    var m = document.getElementById("msg");
+    m.textContent = "If nothing happens, make sure Health Records is running on this computer, then ";
+    m.appendChild(a);
+    m.appendChild(document.createTextNode("."));
+  }, 2000);
+})();
+</script>
+</body>
+</html>
